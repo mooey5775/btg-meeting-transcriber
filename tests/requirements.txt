@@ -1,0 +1,4 @@
+flask
+eventlet
+flask-socketio
+ibm-watsono
