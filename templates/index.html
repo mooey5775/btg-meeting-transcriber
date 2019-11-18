@@ -22,7 +22,15 @@
   <body>
     <div class="container h-100">
       <div id="main-content" class="row h-100 justify-content-center align-items-center">
-        <button type="button" id="rec-btn" class="btn btn-danger btn-lg" onclick="start_recording();">Start</button>
+        <div class="card text-center">
+          <div class="card-header">
+            BTG Meeting Transcriber
+          </div>
+          <div id="card-content" class="card-body">
+            <p id="interim" class="card-text">Click start to get started</p>
+            <button type="button" id="rec-btn" class="btn btn-danger btn-lg" onclick="start_recording();">Start</button>
+          </div>
+        </div>
       </div>
     </div>
 

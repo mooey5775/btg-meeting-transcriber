@@ -10,6 +10,8 @@ import json
 import websocket
 from websocket._abnf import ABNF
 
+import asyncio
+
 REGION_MAP = {
     'us-east': 'gateway-wdc.watsonplatform.net',
     'us-south': 'stream.watsonplatform.net',
@@ -25,6 +27,7 @@ socketio = SocketIO(app)
 
 sockets = {}
 sock_open = {}
+finals = {}
 
 @app.route('/')
 def index():
@@ -47,9 +50,10 @@ def start_audio_tx():
     wst = threading.Thread(target=ws.run_forever)
     wst.daemon = True
     wst.start()
-    socketio.emit("audio-started", namespace="/audio-sock")
+    emit("audio-started")
 
     sockets[request.sid] = ws
+    finals[request.sid] = []
 
 @socketio.on('audio-tx', namespace='/audio-sock')
 def recv_audio_tx(audio):
@@ -57,6 +61,8 @@ def recv_audio_tx(audio):
     if request.sid not in sockets:
         raise ConnectionRefusedError('No audio connection open!')
     app.logger.info(f"Received audio chunk from {request.sid}")
+    transcript = "".join([x['results'][0]['alternatives'][0]['transcript'][:-1]+". " for x in finals[request.sid]])
+    emit("interim-result", transcript)
     sockets[request.sid].send(audio, ABNF.OPCODE_BINARY)
 
 @socketio.on('audio-stop', namespace='/audio-sock')
@@ -67,10 +73,12 @@ def stop_audio_tx():
     data = {"action": "stop"}
     sockets[request.sid].send(json.dumps(data).encode('utf8'))
     # ... which we need to wait for before we shutdown the websocket
-    time.sleep(1)
+    time.sleep(5)
     sockets[request.sid].close()
     del sockets[request.sid]
-    emit("trnsc-result", "testing...")
+    transcript = "".join([x['results'][0]['alternatives'][0]['transcript'][:-1]+". "
+                          for x in finals[request.sid]])
+    emit("trnsc-result", transcript)
 
 def get_auth():
     config = configparser.RawConfigParser()
@@ -88,7 +96,12 @@ def get_url():
 
 def on_message(sid):
     def _on(ws, msg):
-        app.logger.info(msg)
+        data = json.loads(msg)
+        if "results" in data:
+            if data["results"][0]["final"]:
+                finals[sid].append(data)
+            # This prints out the current fragment that we are working on
+            app.logger.info(data['results'][0]['alternatives'][0]['transcript'])
     return _on
 
 def on_error(sid):
@@ -99,7 +112,9 @@ def on_error(sid):
 
 def on_close(sid):
     def _on(ws):
-        pass
+        transcript = "".join([x['results'][0]['alternatives'][0]['transcript'][:-1]+". "
+                          for x in finals[sid]])
+        app.logger.info(transcript)
     return _on
 
 def on_open(sid):
@@ -108,16 +123,17 @@ def on_open(sid):
         data = {
             "action": "start",
             # this means we get to send it straight raw sampling
-            "content-type": "audio/wav",
+            "content-type": "audio/webm",
             "continuous": True,
             "interim_results": True,
             "inactivity_timeout": 30, # in order to use this effectively
             # you need other tests to handle what happens if the socket is
             # closed by the server.
             "word_confidence": True,
-            "speaker_labels": True,
+            #"speaker_labels": True,
             "timestamps": True,
-            "max_alternatives": 3
+            "max_alternatives": 3,
+            "smart_furmatting": True
         }
 
         # Send the initial control message which sets expectations for the

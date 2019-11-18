@@ -19,14 +19,18 @@ function stop_recording() {
 	mediaRecorder.stop();
 	socket.emit("audio-stop");
 
-	$("#main-content")[0].innerHTML = "Waiting for results...";
+	$("#card-content")[0].innerHTML = "Waiting for results...";
 }
 
 socket.on("audio-started", function() {
 	navigator.getUserMedia(mediaConstraint, function(stream) {
-		mediaRecorder = new StereoAudioRecorder(stream);
+		var options = {
+			audioBitsPerSecond: 16000,
+			mimeType: 'audio/webm'
+		}
+		mediaRecorder = new MediaRecorder(stream, options);
 		mediaRecorder.ondataavailable = function(e) {
-		    socket.emit("audio-tx", e);
+		    socket.emit("audio-tx", e.data);
 		}
 		mediaRecorder.start(3000);
 	}, function(error){
@@ -38,5 +42,9 @@ socket.on("audio-started", function() {
 });
 
 socket.on("trnsc-result", function(message) {
-	$("#main-content")[0].innerHTML = message;
+	$("#card-content")[0].innerHTML = message;
+});
+
+socket.on("interim-result", function(message) {
+	$("#interim")[0].innerHTML = "<strong>Interim Results: </strong>" + message;
 });
