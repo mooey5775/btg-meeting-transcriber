@@ -9,6 +9,11 @@ mediaConstraint = {
 	}
 };
 
+navigator.getUserMedia = ( navigator.getUserMedia ||
+                       navigator.webkitGetUserMedia ||
+                       navigator.mozGetUserMedia ||
+                       navigator.msGetUserMedia);
+
 function start_recording() {
 	socket.emit("audio-start");
 	$("#rec-btn")[0].innerText = "Starting...";
