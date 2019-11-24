@@ -13,7 +13,6 @@ def get_main_speaker(result):
     return cnt.most_common(1)[0][0]
 
 def manage_stream(mic, finals, STREAMING_LIMIT):
-    # try:
     client = speech.SpeechClient()
     config = speech.types.RecognitionConfig(
         encoding=speech.enums.RecognitionConfig.AudioEncoding.LINEAR16,
@@ -77,5 +76,3 @@ def manage_stream(mic, finals, STREAMING_LIMIT):
                     stream.last_interim = result.alternatives[0].transcript
 
             stream.next_stream()
-    # except:
-    #     mic.to_close = True

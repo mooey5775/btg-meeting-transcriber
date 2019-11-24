@@ -10,9 +10,6 @@ import os
 
 from meeting_transcriber import MicrophoneStream, manage_stream
 
-# import websocket
-# from websocket._abnf import ABNF
-
 app = Flask(__name__, static_url_path='', static_folder='static')
 logging.basicConfig(level=logging.DEBUG)
 app.config['SECRET_KEY'] = 'secret!'
