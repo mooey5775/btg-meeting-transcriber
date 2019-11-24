@@ -134,6 +134,8 @@ class ResumableMicrophoneStream:
                     for i in range(chunks_from_ms, len(self.last_audio_input)):
                         data.append(self.last_audio_input[i])
 
+                    print(self.bridging_offset)
+
                 self.new_stream = False
 
             # Use a blocking get() to ensure there's at least one chunk of
