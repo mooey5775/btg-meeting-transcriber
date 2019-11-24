@@ -1,10 +1,6 @@
 from six.moves import queue
 import time
 import logging
-from pydub import AudioSegment
-import os
-
-TEMP_DIR = "temp"
 
 class MicrophoneStream:
     def __init__(self, STREAMING_LIMIT, sid):
@@ -21,9 +17,6 @@ class MicrophoneStream:
         self.nonce = 0
         self.STREAMING_LIMIT = STREAMING_LIMIT
         self.last_interim = ""
-
-        if not os.path.exists(TEMP_DIR):
-            os.makedirs(TEMP_DIR)
 
     def __enter__(self):
         self.closed = False
@@ -94,15 +87,4 @@ class MicrophoneStream:
                     break
 
             logging.info("SENDING...")
-            # with open(os.path.join(TEMP_DIR, self.sid + str(self.nonce) + '.webm'), 'wb') as f:
-            #     f.write(b''.join(res))
-
-            # seg = AudioSegment.from_file(os.path.join(TEMP_DIR, self.sid + str(self.nonce) + '.webm'), format='webm')
-
-            # os.remove(os.path.join(TEMP_DIR, self.sid + str(self.nonce) + '.webm'))
-            # self.nonce += 1
-
-            # logging.info("SENT")
-            # yield seg.raw_data
-
             yield b''.join(res)
