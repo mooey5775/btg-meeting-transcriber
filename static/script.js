@@ -9,6 +9,11 @@ mediaConstraint = {
 	}
 };
 
+navigator.getUserMedia = ( navigator.getUserMedia ||
+                       navigator.webkitGetUserMedia ||
+                       navigator.mozGetUserMedia ||
+                       navigator.msGetUserMedia);
+
 function start_recording() {
 	socket.emit("audio-start");
 	$("#rec-btn")[0].innerText = "Starting...";
@@ -16,7 +21,7 @@ function start_recording() {
 }
 
 function stop_recording() {
-	mediaRecorder.stop();
+	audioRecorder.stop();
 	socket.emit("audio-stop");
 
 	$("#card-content")[0].innerHTML = "Waiting for results...";
@@ -24,15 +29,14 @@ function stop_recording() {
 
 socket.on("audio-started", function() {
 	navigator.getUserMedia(mediaConstraint, function(stream) {
-		var options = {
-			audioBitsPerSecond: 16000,
-			mimeType: 'audio/webm'
+		audioRecorder = new MediaStreamRecorder(stream);
+		audioRecorder.mimeType = 'audio/pcm';
+		//audioRecorder.sampleRate = 22050;
+		audioRecorder.audioChannels = 1;
+		audioRecorder.ondataavailable = function(e) {
+		    socket.emit("audio-tx", e);
 		}
-		mediaRecorder = new MediaRecorder(stream, options);
-		mediaRecorder.ondataavailable = function(e) {
-		    socket.emit("audio-tx", e.data);
-		}
-		mediaRecorder.start(3000);
+		audioRecorder.start(1000);
 	}, function(error){
 
 	});
